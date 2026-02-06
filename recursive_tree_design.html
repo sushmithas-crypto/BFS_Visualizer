@@ -1,0 +1,992 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Designing Trees Using Recursion - Interactive Visualizer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1800px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.8em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.95;
+        }
+
+        .main-layout {
+            display: grid;
+            grid-template-columns: 320px 1fr 350px;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .panel {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .panel h3 {
+            color: #667eea;
+            margin-bottom: 20px;
+            font-size: 1.2em;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .section {
+            margin-bottom: 25px;
+        }
+
+        .section-title {
+            font-weight: 600;
+            color: #555;
+            margin-bottom: 12px;
+            font-size: 0.95em;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-bottom: 10px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #f5f5f5;
+            color: #333;
+        }
+
+        .btn-secondary:hover:not(:disabled) {
+            background: #e0e0e0;
+        }
+
+        .btn-operation {
+            background: white;
+            color: #667eea;
+            border: 2px solid #667eea;
+            padding: 10px;
+            font-size: 0.95em;
+        }
+
+        .btn-operation:hover {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-operation.active {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .operation-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+
+        .input-group {
+            margin-bottom: 15px;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: 500;
+            font-size: 0.9em;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1em;
+        }
+
+        .input-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        #treeCanvas {
+            width: 100%;
+            height: 600px;
+            border: 2px solid #f0f0f0;
+            border-radius: 10px;
+            background: white;
+        }
+
+        .call-stack {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 15px;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .call-frame {
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 10px;
+            transition: all 0.3s;
+        }
+
+        .call-frame.active {
+            border-color: #667eea;
+            background: #e7f0ff;
+            transform: translateX(5px);
+        }
+
+        .call-frame.returning {
+            border-color: #28a745;
+            background: #d4edda;
+        }
+
+        .call-frame.base-case {
+            border-color: #ffc107;
+            background: #fff3cd;
+        }
+
+        .frame-header {
+            font-weight: 600;
+            color: #667eea;
+            margin-bottom: 5px;
+            font-size: 0.95em;
+        }
+
+        .frame-params {
+            font-size: 0.85em;
+            color: #666;
+            font-family: 'Courier New', monospace;
+        }
+
+        .frame-return {
+            font-size: 0.85em;
+            color: #28a745;
+            font-family: 'Courier New', monospace;
+            margin-top: 5px;
+        }
+
+        .code-display {
+            background: #282c34;
+            color: #abb2bf;
+            padding: 20px;
+            border-radius: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            line-height: 1.6;
+            overflow-x: auto;
+            margin-bottom: 20px;
+        }
+
+        .code-line {
+            padding: 2px 0;
+        }
+
+        .code-line.highlight {
+            background: rgba(255, 193, 7, 0.3);
+            border-left: 3px solid #ffc107;
+            padding-left: 10px;
+        }
+
+        .keyword {
+            color: #c678dd;
+        }
+
+        .function {
+            color: #61afef;
+        }
+
+        .comment {
+            color: #5c6370;
+            font-style: italic;
+        }
+
+        .number {
+            color: #d19a66;
+        }
+
+        .string {
+            color: #98c379;
+        }
+
+        .info-card {
+            background: linear-gradient(135deg, #667eea15 0%, #764ba215 100%);
+            border-left: 4px solid #667eea;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+
+        .info-card h4 {
+            color: #667eea;
+            margin-bottom: 8px;
+            font-size: 1em;
+        }
+
+        .info-card p {
+            color: #555;
+            font-size: 0.9em;
+            line-height: 1.5;
+            margin: 5px 0;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-top: 20px;
+        }
+
+        .stat-box {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .stat-label {
+            font-size: 0.85em;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .stat-value {
+            font-size: 1.6em;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .recursion-path {
+            margin-top: 15px;
+        }
+
+        .path-item {
+            padding: 8px 12px;
+            background: white;
+            border-left: 3px solid #667eea;
+            border-radius: 5px;
+            margin-bottom: 8px;
+            font-size: 0.85em;
+        }
+
+        .path-item.current {
+            background: #e7f0ff;
+            font-weight: 600;
+        }
+
+        .legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-top: 15px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.85em;
+        }
+
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+            border: 2px solid #333;
+        }
+
+        @media (max-width: 1400px) {
+            .main-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🌳 Designing Trees Using Recursion</h1>
+            <p>Visualize how recursive functions build and traverse binary trees</p>
+        </div>
+
+        <div class="main-layout">
+            <!-- Left Panel: Controls -->
+            <div class="panel">
+                <h3>🎮 Controls</h3>
+
+                <div class="section">
+                    <div class="section-title">Choose Operation</div>
+                    <div class="operation-grid">
+                        <button class="btn btn-operation active" onclick="selectOperation('height')">Tree Height</button>
+                        <button class="btn btn-operation" onclick="selectOperation('count')">Count Nodes</button>
+                        <button class="btn btn-operation" onclick="selectOperation('sum')">Sum Values</button>
+                        <button class="btn btn-operation" onclick="selectOperation('search')">Search Value</button>
+                        <button class="btn btn-operation" onclick="selectOperation('mirror')">Mirror Tree</button>
+                        <button class="btn btn-operation" onclick="selectOperation('diameter')">Diameter</button>
+                    </div>
+                </div>
+
+                <div class="section" id="searchSection" style="display: none;">
+                    <div class="input-group">
+                        <label>Value to Search:</label>
+                        <input type="number" id="searchValue" value="5" placeholder="Enter value">
+                    </div>
+                </div>
+
+                <div class="section">
+                    <button class="btn btn-primary" id="startBtn" onclick="startRecursion()">Start Recursion</button>
+                    <button class="btn btn-secondary" id="stepBtn" onclick="nextStep()" disabled>Next Step</button>
+                    <button class="btn btn-secondary" onclick="resetVisualization()">Reset</button>
+                </div>
+
+                <div class="section">
+                    <div class="section-title">Animation Speed</div>
+                    <input type="range" id="speedSlider" min="300" max="2000" value="1000" step="100" style="width: 100%;">
+                    <div style="text-align: center; margin-top: 8px; color: #666; font-size: 0.9em;" id="speedLabel">Normal</div>
+                </div>
+
+                <div class="section">
+                    <div class="section-title">Example Trees</div>
+                    <button class="btn btn-secondary" onclick="loadExample(1)">Balanced Tree</button>
+                    <button class="btn btn-secondary" onclick="loadExample(2)">Left Skewed</button>
+                    <button class="btn btn-secondary" onclick="loadExample(3)">Complete Tree</button>
+                </div>
+
+                <div class="info-card">
+                    <h4>💡 About Recursion</h4>
+                    <p>• <strong>Base Case:</strong> Where recursion stops</p>
+                    <p>• <strong>Recursive Case:</strong> Calls itself on smaller problem</p>
+                    <p>• <strong>Return:</strong> Combines results from subtrees</p>
+                </div>
+            </div>
+
+            <!-- Middle Panel: Tree Visualization -->
+            <div class="panel">
+                <h3>
+                    <span id="operationTitle">🌲 Tree Height Calculation</span>
+                </h3>
+                <canvas id="treeCanvas"></canvas>
+
+                <div class="legend">
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #ffc107;"></div>
+                        <span>Current Node</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #28a745;"></div>
+                        <span>Processed</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #e7f0ff; border-color: #667eea;"></div>
+                        <span>In Stack</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: white;"></div>
+                        <span>Not Visited</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Panel: Call Stack & Code -->
+            <div class="panel">
+                <h3>📚 Recursion Call Stack</h3>
+                
+                <div class="call-stack" id="callStack">
+                    <div style="color: #999; text-align: center; padding: 20px;">
+                        Click "Start Recursion" to begin
+                    </div>
+                </div>
+
+                <div class="stats-grid">
+                    <div class="stat-box">
+                        <div class="stat-label">Stack Depth</div>
+                        <div class="stat-value" id="stackDepth">0</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-label">Total Calls</div>
+                        <div class="stat-value" id="totalCalls">0</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-label">Current Step</div>
+                        <div class="stat-value" id="currentStep">0</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-label">Result</div>
+                        <div class="stat-value" id="resultValue">-</div>
+                    </div>
+                </div>
+
+                <div style="margin-top: 20px;">
+                    <h4 style="color: #667eea; margin-bottom: 10px;">Recursive Code:</h4>
+                    <div class="code-display" id="codeDisplay"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class TreeNode {
+            constructor(val) {
+                this.val = val;
+                this.left = null;
+                this.right = null;
+                this.x = 0;
+                this.y = 0;
+                this.status = 'unvisited'; // unvisited, current, processing, processed
+                this.result = null;
+            }
+        }
+
+        let canvas, ctx;
+        let root = null;
+        let currentOperation = 'height';
+        let animationSpeed = 1000;
+        let recursionSteps = [];
+        let currentStepIndex = 0;
+        let callStack = [];
+        let totalCalls = 0;
+
+        const operations = {
+            height: {
+                title: '🌲 Tree Height Calculation',
+                code: `<span class="keyword">function</span> <span class="function">height</span>(node) {
+    <span class="comment">// Base case: empty tree has height 0</span>
+    <span class="keyword">if</span> (node == <span class="keyword">null</span>) <span class="keyword">return</span> <span class="number">0</span>;
+    
+    <span class="comment">// Recursive case: height = 1 + max of subtrees</span>
+    <span class="keyword">let</span> leftHeight = <span class="function">height</span>(node.left);
+    <span class="keyword">let</span> rightHeight = <span class="function">height</span>(node.right);
+    
+    <span class="keyword">return</span> <span class="number">1</span> + Math.<span class="function">max</span>(leftHeight, rightHeight);
+}`,
+                func: (node) => {
+                    if (!node) return 0;
+                    const left = operations.height.func(node.left);
+                    const right = operations.height.func(node.right);
+                    return 1 + Math.max(left, right);
+                }
+            },
+            count: {
+                title: '🔢 Count Nodes',
+                code: `<span class="keyword">function</span> <span class="function">countNodes</span>(node) {
+    <span class="comment">// Base case: no nodes in empty tree</span>
+    <span class="keyword">if</span> (node == <span class="keyword">null</span>) <span class="keyword">return</span> <span class="number">0</span>;
+    
+    <span class="comment">// Recursive case: 1 + count of both subtrees</span>
+    <span class="keyword">let</span> leftCount = <span class="function">countNodes</span>(node.left);
+    <span class="keyword">let</span> rightCount = <span class="function">countNodes</span>(node.right);
+    
+    <span class="keyword">return</span> <span class="number">1</span> + leftCount + rightCount;
+}`,
+                func: (node) => {
+                    if (!node) return 0;
+                    const left = operations.count.func(node.left);
+                    const right = operations.count.func(node.right);
+                    return 1 + left + right;
+                }
+            },
+            sum: {
+                title: '➕ Sum of All Values',
+                code: `<span class="keyword">function</span> <span class="function">sumValues</span>(node) {
+    <span class="comment">// Base case: empty tree has sum 0</span>
+    <span class="keyword">if</span> (node == <span class="keyword">null</span>) <span class="keyword">return</span> <span class="number">0</span>;
+    
+    <span class="comment">// Recursive case: current + sum of subtrees</span>
+    <span class="keyword">let</span> leftSum = <span class="function">sumValues</span>(node.left);
+    <span class="keyword">let</span> rightSum = <span class="function">sumValues</span>(node.right);
+    
+    <span class="keyword">return</span> node.val + leftSum + rightSum;
+}`,
+                func: (node) => {
+                    if (!node) return 0;
+                    const left = operations.sum.func(node.left);
+                    const right = operations.sum.func(node.right);
+                    return node.val + left + right;
+                }
+            },
+            search: {
+                title: '🔍 Search for Value',
+                code: `<span class="keyword">function</span> <span class="function">search</span>(node, target) {
+    <span class="comment">// Base case: value not found in empty tree</span>
+    <span class="keyword">if</span> (node == <span class="keyword">null</span>) <span class="keyword">return</span> <span class="keyword">false</span>;
+    
+    <span class="comment">// Base case: value found!</span>
+    <span class="keyword">if</span> (node.val == target) <span class="keyword">return</span> <span class="keyword">true</span>;
+    
+    <span class="comment">// Recursive case: search both subtrees</span>
+    <span class="keyword">return</span> <span class="function">search</span>(node.left, target) || <span class="function">search</span>(node.right, target);
+}`,
+                func: (node, target) => {
+                    if (!node) return false;
+                    if (node.val === target) return true;
+                    return operations.search.func(node.left, target) || operations.search.func(node.right, target);
+                }
+            },
+            mirror: {
+                title: '🪞 Mirror Tree',
+                code: `<span class="keyword">function</span> <span class="function">mirror</span>(node) {
+    <span class="comment">// Base case: nothing to mirror</span>
+    <span class="keyword">if</span> (node == <span class="keyword">null</span>) <span class="keyword">return</span> <span class="keyword">null</span>;
+    
+    <span class="comment">// Recursive case: swap left and right</span>
+    <span class="keyword">let</span> temp = node.left;
+    node.left = <span class="function">mirror</span>(node.right);
+    node.right = <span class="function">mirror</span>(temp);
+    
+    <span class="keyword">return</span> node;
+}`,
+                func: (node) => {
+                    if (!node) return null;
+                    const temp = node.left;
+                    node.left = operations.mirror.func(node.right);
+                    node.right = operations.mirror.func(temp);
+                    return node;
+                }
+            },
+            diameter: {
+                title: '📏 Tree Diameter',
+                code: `<span class="keyword">function</span> <span class="function">diameter</span>(node) {
+    <span class="comment">// Base case: empty tree has diameter 0</span>
+    <span class="keyword">if</span> (node == <span class="keyword">null</span>) <span class="keyword">return</span> <span class="number">0</span>;
+    
+    <span class="comment">// Get heights and diameters of subtrees</span>
+    <span class="keyword">let</span> lh = <span class="function">height</span>(node.left);
+    <span class="keyword">let</span> rh = <span class="function">height</span>(node.right);
+    <span class="keyword">let</span> ld = <span class="function">diameter</span>(node.left);
+    <span class="keyword">let</span> rd = <span class="function">diameter</span>(node.right);
+    
+    <span class="comment">// Diameter through root or in subtrees</span>
+    <span class="keyword">return</span> Math.<span class="function">max</span>(lh + rh + <span class="number">1</span>, Math.<span class="function">max</span>(ld, rd));
+}`,
+                func: (node) => {
+                    if (!node) return 0;
+                    const lh = getHeight(node.left);
+                    const rh = getHeight(node.right);
+                    const ld = operations.diameter.func(node.left);
+                    const rd = operations.diameter.func(node.right);
+                    return Math.max(lh + rh + 1, Math.max(ld, rd));
+                }
+            }
+        };
+
+        function getHeight(node) {
+            if (!node) return 0;
+            return 1 + Math.max(getHeight(node.left), getHeight(node.right));
+        }
+
+        window.onload = function() {
+            canvas = document.getElementById('treeCanvas');
+            ctx = canvas.getContext('2d');
+            canvas.width = canvas.offsetWidth;
+            canvas.height = canvas.offsetHeight;
+            
+            loadExample(1);
+            updateCodeDisplay();
+            
+            document.getElementById('speedSlider').addEventListener('input', function() {
+                animationSpeed = parseInt(this.value);
+                const speed = animationSpeed < 700 ? 'Fast' : animationSpeed < 1300 ? 'Normal' : 'Slow';
+                document.getElementById('speedLabel').textContent = speed;
+            });
+        };
+
+        function selectOperation(op) {
+            currentOperation = op;
+            document.querySelectorAll('.btn-operation').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            document.getElementById('operationTitle').textContent = operations[op].title;
+            document.getElementById('searchSection').style.display = op === 'search' ? 'block' : 'none';
+            
+            updateCodeDisplay();
+            resetVisualization();
+        }
+
+        function updateCodeDisplay() {
+            document.getElementById('codeDisplay').innerHTML = operations[currentOperation].code;
+        }
+
+        function buildExampleTree1() {
+            root = new TreeNode(10);
+            root.left = new TreeNode(5);
+            root.right = new TreeNode(15);
+            root.left.left = new TreeNode(3);
+            root.left.right = new TreeNode(7);
+            root.right.left = new TreeNode(12);
+            root.right.right = new TreeNode(18);
+        }
+
+        function buildExampleTree2() {
+            root = new TreeNode(1);
+            root.left = new TreeNode(2);
+            root.left.left = new TreeNode(3);
+            root.left.left.left = new TreeNode(4);
+            root.left.left.left.left = new TreeNode(5);
+        }
+
+        function buildExampleTree3() {
+            root = new TreeNode(1);
+            root.left = new TreeNode(2);
+            root.right = new TreeNode(3);
+            root.left.left = new TreeNode(4);
+            root.left.right = new TreeNode(5);
+            root.right.left = new TreeNode(6);
+            root.right.right = new TreeNode(7);
+            root.left.left.left = new TreeNode(8);
+        }
+
+        function loadExample(num) {
+            if (num === 1) buildExampleTree1();
+            else if (num === 2) buildExampleTree2();
+            else if (num === 3) buildExampleTree3();
+            
+            resetVisualization();
+        }
+
+        function calculatePositions(node, x, y, horizontalSpacing) {
+            if (!node) return;
+            
+            node.x = x;
+            node.y = y;
+            
+            const spacing = horizontalSpacing / 2;
+            
+            if (node.left) {
+                calculatePositions(node.left, x - spacing, y + 80, spacing);
+            }
+            if (node.right) {
+                calculatePositions(node.right, x + spacing, y + 80, spacing);
+            }
+        }
+
+        function drawTree() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            if (!root) return;
+            
+            calculatePositions(root, canvas.width / 2, 50, canvas.width / 3);
+            drawNode(root);
+        }
+
+        function drawNode(node) {
+            if (!node) return;
+            
+            // Draw edges
+            if (node.left) {
+                ctx.beginPath();
+                ctx.moveTo(node.x, node.y);
+                ctx.lineTo(node.left.x, node.left.y);
+                ctx.strokeStyle = '#ddd';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+                drawNode(node.left);
+            }
+            if (node.right) {
+                ctx.beginPath();
+                ctx.moveTo(node.x, node.y);
+                ctx.lineTo(node.right.x, node.right.y);
+                ctx.strokeStyle = '#ddd';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+                drawNode(node.right);
+            }
+            
+            // Determine colors
+            let fillColor = 'white';
+            let strokeColor = '#667eea';
+            let textColor = '#333';
+            
+            if (node.status === 'current') {
+                fillColor = '#ffc107';
+                strokeColor = '#ffc107';
+                textColor = 'white';
+            } else if (node.status === 'processed') {
+                fillColor = '#28a745';
+                strokeColor = '#28a745';
+                textColor = 'white';
+            } else if (node.status === 'processing') {
+                fillColor = '#e7f0ff';
+                strokeColor = '#667eea';
+            }
+            
+            // Draw circle
+            ctx.beginPath();
+            ctx.arc(node.x, node.y, 28, 0, 2 * Math.PI);
+            ctx.fillStyle = fillColor;
+            ctx.fill();
+            ctx.strokeStyle = strokeColor;
+            ctx.lineWidth = 3;
+            ctx.stroke();
+            
+            // Draw value
+            ctx.fillStyle = textColor;
+            ctx.font = 'bold 16px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(node.val, node.x, node.y);
+            
+            // Draw result if available
+            if (node.result !== null && node.status === 'processed') {
+                ctx.fillStyle = '#28a745';
+                ctx.font = 'bold 12px Arial';
+                ctx.fillText(`→ ${node.result}`, node.x, node.y + 45);
+            }
+        }
+
+        function generateRecursionSteps(node, operation, params = {}) {
+            const steps = [];
+            
+            function traverse(n, depth = 0) {
+                if (!n && operation !== 'mirror') {
+                    steps.push({
+                        type: 'base-case',
+                        node: null,
+                        depth: depth,
+                        message: 'Base case: node is null',
+                        result: operation === 'search' ? false : 0
+                    });
+                    return operation === 'search' ? false : 0;
+                }
+                
+                if (!n) return null;
+                
+                steps.push({
+                    type: 'enter',
+                    node: n,
+                    depth: depth,
+                    message: `Called on node ${n.val}`
+                });
+                
+                if (operation === 'search' && n.val === params.target) {
+                    steps.push({
+                        type: 'found',
+                        node: n,
+                        depth: depth,
+                        message: `Found target ${params.target}!`,
+                        result: true
+                    });
+                    return true;
+                }
+                
+                const leftResult = traverse(n.left, depth + 1);
+                const rightResult = traverse(n.right, depth + 1);
+                
+                let result;
+                if (operation === 'height') {
+                    result = 1 + Math.max(leftResult || 0, rightResult || 0);
+                } else if (operation === 'count') {
+                    result = 1 + (leftResult || 0) + (rightResult || 0);
+                } else if (operation === 'sum') {
+                    result = n.val + (leftResult || 0) + (rightResult || 0);
+                } else if (operation === 'search') {
+                    result = leftResult || rightResult;
+                } else if (operation === 'diameter') {
+                    const lh = getHeight(n.left);
+                    const rh = getHeight(n.right);
+                    result = Math.max(lh + rh + 1, Math.max(leftResult || 0, rightResult || 0));
+                }
+                
+                steps.push({
+                    type: 'return',
+                    node: n,
+                    depth: depth,
+                    message: `Returning ${result} from node ${n.val}`,
+                    result: result
+                });
+                
+                return result;
+            }
+            
+            const finalResult = traverse(node);
+            steps.push({
+                type: 'complete',
+                result: finalResult,
+                message: `Recursion complete! Final result: ${finalResult}`
+            });
+            
+            return steps;
+        }
+
+        function startRecursion() {
+            const params = {};
+            if (currentOperation === 'search') {
+                params.target = parseInt(document.getElementById('searchValue').value);
+            }
+            
+            recursionSteps = generateRecursionSteps(root, currentOperation, params);
+            currentStepIndex = 0;
+            totalCalls = 0;
+            
+            document.getElementById('startBtn').disabled = true;
+            document.getElementById('stepBtn').disabled = false;
+            
+            nextStep();
+        }
+
+        function nextStep() {
+            if (currentStepIndex >= recursionSteps.length) {
+                document.getElementById('stepBtn').disabled = true;
+                document.getElementById('startBtn').disabled = false;
+                return;
+            }
+            
+            const step = recursionSteps[currentStepIndex];
+            
+            // Reset all nodes
+            resetNodeStatus(root);
+            
+            // Update node status
+            if (step.node) {
+                step.node.status = step.type === 'enter' ? 'current' : step.type === 'return' ? 'processed' : 'processing';
+                if (step.result !== undefined) {
+                    step.node.result = step.result;
+                }
+            }
+            
+            // Update call stack display
+            updateCallStackDisplay(step);
+            
+            // Update statistics
+            if (step.type === 'enter') totalCalls++;
+            document.getElementById('totalCalls').textContent = totalCalls;
+            document.getElementById('currentStep').textContent = currentStepIndex + 1;
+            document.getElementById('stackDepth').textContent = step.depth !== undefined ? step.depth + 1 : 0;
+            
+            if (step.type === 'complete') {
+                document.getElementById('resultValue').textContent = step.result;
+            }
+            
+            drawTree();
+            currentStepIndex++;
+        }
+
+        function resetNodeStatus(node) {
+            if (!node) return;
+            node.status = 'unvisited';
+            node.result = null;
+            resetNodeStatus(node.left);
+            resetNodeStatus(node.right);
+        }
+
+        function updateCallStackDisplay(step) {
+            const container = document.getElementById('callStack');
+            
+            if (step.type === 'enter') {
+                const frame = document.createElement('div');
+                frame.className = 'call-frame active';
+                frame.id = `frame-${step.depth}`;
+                frame.innerHTML = `
+                    <div class="frame-header">${currentOperation}(${step.node ? step.node.val : 'null'})</div>
+                    <div class="frame-params">${step.message}</div>
+                `;
+                container.appendChild(frame);
+            } else if (step.type === 'return') {
+                const frame = document.getElementById(`frame-${step.depth}`);
+                if (frame) {
+                    frame.className = 'call-frame returning';
+                    frame.innerHTML += `<div class="frame-return">↩ return ${step.result}</div>`;
+                    setTimeout(() => frame.remove(), animationSpeed * 0.8);
+                }
+            } else if (step.type === 'base-case') {
+                const frame = document.createElement('div');
+                frame.className = 'call-frame base-case';
+                frame.innerHTML = `
+                    <div class="frame-header">Base Case</div>
+                    <div class="frame-params">${step.message}</div>
+                    <div class="frame-return">↩ return ${step.result}</div>
+                `;
+                container.appendChild(frame);
+                setTimeout(() => frame.remove(), animationSpeed * 0.8);
+            } else if (step.type === 'complete') {
+                container.innerHTML = `
+                    <div class="call-frame" style="background: #d4edda; border-color: #28a745;">
+                        <div class="frame-header" style="color: #28a745;">✓ Complete!</div>
+                        <div class="frame-params">${step.message}</div>
+                    </div>
+                `;
+            }
+        }
+
+        function resetVisualization() {
+            recursionSteps = [];
+            currentStepIndex = 0;
+            totalCalls = 0;
+            
+            resetNodeStatus(root);
+            
+            document.getElementById('callStack').innerHTML = '<div style="color: #999; text-align: center; padding: 20px;">Click "Start Recursion" to begin</div>';
+            document.getElementById('totalCalls').textContent = 0;
+            document.getElementById('currentStep').textContent = 0;
+            document.getElementById('stackDepth').textContent = 0;
+            document.getElementById('resultValue').textContent = '-';
+            document.getElementById('startBtn').disabled = false;
+            document.getElementById('stepBtn').disabled = true;
+            
+            drawTree();
+        }
+
+        window.addEventListener('resize', function() {
+            canvas.width = canvas.offsetWidth;
+            canvas.height = canvas.offsetHeight;
+            drawTree();
+        });
+    </script>
+</body>
+</html>
